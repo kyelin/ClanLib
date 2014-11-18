@@ -31,7 +31,6 @@
 #include "API/Display/Font/font_metrics.h"
 #include "API/Display/Font/font_description.h"
 #include "API/Display/TargetProviders/graphic_context_provider.h"
-#include "API/Core/IOData/path_help.h"
 #include "API/Core/Text/string_help.h"
 #include "API/Core/Text/string_format.h"
 #include "API/Core/Text/utf8_reader.h"
@@ -63,16 +62,10 @@ Font::Font( Canvas &canvas, const FontDescription &desc)
 	*this = Font(canvas, desc, "");
 }
 
-  Font::Font( Canvas &canvas, const FontDescription &desc, const std::string &ttf_filename) : impl(new Font_Impl)
+Font::Font( Canvas &canvas, const FontDescription &desc, const std::string &ttf_filename) : impl(new Font_Impl)
 {
-  impl->load_font( canvas, desc, ttf_filename );
+	impl->load_font( canvas, desc, ttf_filename);
 }
-
-  Font::Font( Canvas &canvas, const FontDescription &desc, const std::string &ttf_filename, FileSystem fs) : impl(new Font_Impl)
-{
-  impl->load_font( canvas, desc, ttf_filename, fs );
-}
-
 
 Font::Font( Canvas &canvas, Sprite &sprite, const std::string &glyph_list, int spacelen, bool monospace, const FontMetrics &metrics) : impl(new Font_Impl)
 {
@@ -178,13 +171,8 @@ Font Font_Impl::load(Canvas &canvas, const FontDescription &reference_desc, cons
 
 		std::string filename;
 
-		
-
 		if (ttf_element.has_attribute("file"))
-		  {
-		    filename = PathHelp::combine(resource.get_base_path(), ttf_element.get_attribute("file"));
-		    desc.set_typeface_name(ttf_element.get_attribute("file"));
-		  }
+			filename = ttf_element.get_attribute("file"); desc.set_typeface_name(ttf_element.get_attribute("file"));
 
 		if (ttf_element.has_attribute("typeface"))
 			desc.set_typeface_name(ttf_element.get_attribute("typeface"));
@@ -201,7 +189,7 @@ Font Font_Impl::load(Canvas &canvas, const FontDescription &reference_desc, cons
 		if (ttf_element.has_attribute("subpixel"))
 			desc.set_subpixel(ttf_element.get_attribute_bool("subpixel", true));
 
-		return Font(canvas, desc, filename, resource.get_file_system());
+		return Font(canvas, desc, filename);
 	}
 
 	throw Exception(string_format("Font resource %1 did not have a <sprite> or <ttf> child element", resource.get_name()));
@@ -279,6 +267,8 @@ void Font::draw_text_ellipsis(Canvas &canvas, float dest_x, float dest_y, Rectf 
 						if (seek_center != utf8_reader.get_position())
 							utf8_reader.next();
 						seek_center = utf8_reader.get_position();
+						if (seek_center == seek_end)
+							break;
 
 						utf8_reader.set_position(seek_start);
 						utf8_reader.next();
